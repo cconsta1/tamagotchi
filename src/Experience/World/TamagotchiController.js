@@ -1,108 +1,45 @@
 import * as THREE from 'three'
 import Experience from '../Experience.js'
 
-export default class TamagotchiControllerDebug {
+export default class TamagotchiController {
     constructor(robot) {
-        this.experience = new Experience();
-        this.scene = this.experience.scene;
-        this.gui = this.experience.gui;
-        this.robot = robot;
+        this.experience = new Experience()
+        this.scene = this.experience.scene
+        this.robot = robot
 
-        this.batteryLevel = 100;
-        this.batteryDrainRate = 100 / 300; // Drains in 5 minutes
-        this.isAlive = true;
-        this.currentMode = 'feed';
-        this.wasteObjects = [];
+        this.batteryLevel = 100
+        this.batteryDrainRate = 100 / 300 // Drains in 5 minutes
+        this.isAlive = true
+        this.currentMode = 'feed'
+        this.wasteObjects = []
+        this.ui = window.tamagotchiUI
+        this.lowPowerNotified = false
 
-        this.mixer = new THREE.AnimationMixer(this.robot.model);
-        this.actions = {};
-        this.activeAction = null;
-        this.previousAction = null;
+        this.mixer = new THREE.AnimationMixer(this.robot.model)
+        this.actions = {}
+        this.activeAction = null
+        this.previousAction = null
 
-        this.createButtons();
-        this.createProgressBar();
-        this.createModeIndicator();
-        this.createResetButton();
+        this.initAnimations()
+        this.logMorphTargets()
+        this.startWasteCreation()
 
-        this.initAnimations();
-        this.logMorphTargets();
-
-        // Start waste creation loop with debug logs
-        this.startWasteCreation();
-    }
-
-    createButtons() {
-        this.gui.add(this, 'toggleMode').name('Toggle Mode')
-        this.gui.add(this, 'performAction').name('Perform Action')
-        this.gui.add(this, 'cancelAction').name('Cancel Action')
-    }
-
-    createProgressBar() {
-        const progressBarContainer = document.createElement('div')
-        progressBarContainer.className = 'progress-bar-container'
-        document.body.appendChild(progressBarContainer)
-
-        this.progressBar = document.createElement('div')
-        this.progressBar.className = 'progress-bar'
-        progressBarContainer.appendChild(this.progressBar)
-    }
-
-    createModeIndicator() {
-        this.modeIndicator = document.createElement('div')
-        this.modeIndicator.className = 'mode-indicator'
-        this.modeIndicator.style.position = 'absolute'
-        this.modeIndicator.style.top = '50px'
-        this.modeIndicator.style.left = '10px'
-        this.modeIndicator.style.color = '#fff'
-        this.modeIndicator.style.fontFamily = 'Arial, sans-serif'
-        this.modeIndicator.style.fontSize = '20px'
-        document.body.appendChild(this.modeIndicator)
-        this.updateModeIndicator()
-    }
-
-    updateModeIndicator() {
-        this.modeIndicator.innerText = `Current Mode: ${this.currentMode}`
-    }
-
-    createResetButton() {
-        this.resetButton = document.createElement('button')
-        this.resetButton.className = 'reset-button'
-        this.resetButton.innerText = 'Reset'
-        this.resetButton.style.position = 'absolute'
-        this.resetButton.style.bottom = '10px'
-        this.resetButton.style.right = '10px'
-        this.resetButton.style.padding = '10px'
-        this.resetButton.style.backgroundColor = '#ff0000'
-        this.resetButton.style.color = '#fff'
-        this.resetButton.style.border = 'none'
-        this.resetButton.style.cursor = 'pointer'
-        this.resetButton.style.display = 'none' // Initially hidden
-        this.resetButton.onclick = () => this.reset()
-        document.body.appendChild(this.resetButton)
-    }
-
-    showResetButton() {
-        if (this.resetButton) {
-            this.resetButton.style.display = 'block'
-        }
+        this.syncUI({ withMode: true })
     }
 
     initAnimations() {
         const animations = this.robot.model.animations
 
-        // Create actions for each clip
         for (const clip of animations) {
             const action = this.mixer.clipAction(clip)
             this.actions[clip.name] = action
 
-            // Single-use animations (emotes or states with index >= 4) play once and clamp
             if (['Death', 'Dance', 'ThumbsUp', 'Jump'].includes(clip.name)) {
                 action.loop = THREE.LoopOnce
                 action.clampWhenFinished = true
             }
         }
 
-        // Start the walking animation immediately
         this.fadeToAction('Walking', 0.5)
     }
 
@@ -128,71 +65,65 @@ export default class TamagotchiControllerDebug {
             .play()
     }
 
-    toggleMode() {
-        const modes = ['feed', 'play', 'clean']
-        const currentIndex = modes.indexOf(this.currentMode)
-        this.currentMode = modes[(currentIndex + 1) % modes.length]
-        console.log(`Current mode: ${this.currentMode}`)
-        this.updateModeIndicator()
+    setMode(mode) {
+        this.currentMode = mode
+        this.syncUI({ withMode: true })
     }
 
     performAction() {
-        if (!this.isAlive) return;
+        if (!this.isAlive) return
 
         switch (this.currentMode) {
             case 'feed':
-                this.feedBattery();
-                this.playJumpAnimation(); // Play jump animation when fed
-                break;
+                this.feedBattery()
+                this.playJumpAnimation()
+                this.ui?.setStatusMessage?.('Battery topped up!')
+                break
             case 'play':
-                this.playDanceAnimation(); // Make the robot dance in play mode
-                break;
+                this.playDanceAnimation()
+                this.ui?.setStatusMessage?.('Playtime! Mini dance unlocked')
+                break
             case 'clean':
-                this.cleanWaste();        // 🧹 Remove waste when cleaning
-                this.playThumbsUpAnimation(); // Show thumbs up after cleaning
-                break;
+                this.cleanWaste()
+                this.playThumbsUpAnimation()
+                this.ui?.setStatusMessage?.('All tidy again')
+                break
         }
     }
 
 
     playJumpAnimation() {
         this.fadeToAction('Jump', 0.5)
-        const onJumpFinished = () => {
-            this.mixer.removeEventListener('finished', onJumpFinished)
+        const listener = () => {
+            this.mixer.removeEventListener('finished', listener)
             this.restoreWalking()
         }
-        this.mixer.addEventListener('finished', onJumpFinished)
+        this.mixer.addEventListener('finished', listener)
     }
 
     playDanceAnimation() {
         this.fadeToAction('Dance', 0.5)
-        const onDanceFinished = () => {
-            this.mixer.removeEventListener('finished', onDanceFinished)
+        const listener = () => {
+            this.mixer.removeEventListener('finished', listener)
             this.restoreWalking()
         }
-        this.mixer.addEventListener('finished', onDanceFinished)
+        this.mixer.addEventListener('finished', listener)
     }
 
     playThumbsUpAnimation() {
         this.fadeToAction('ThumbsUp', 0.5)
-        const onThumbsUpFinished = () => {
-            this.mixer.removeEventListener('finished', onThumbsUpFinished)
+        const listener = () => {
+            this.mixer.removeEventListener('finished', listener)
             this.restoreWalking()
         }
-        this.mixer.addEventListener('finished', onThumbsUpFinished)
-    }
-
-    cancelAction() {
-        console.log('Action canceled')
-        // Reset to default mode
-        this.currentMode = 'feed'
-        this.updateModeIndicator()
+        this.mixer.addEventListener('finished', listener)
     }
 
     feedBattery() {
         if (this.isAlive) {
             this.batteryLevel = 100
             this.updateExpression()
+            this.syncUI()
         }
     }
 
@@ -205,7 +136,7 @@ export default class TamagotchiControllerDebug {
     update(deltaTime) {
         if (this.isAlive) {
             this.batteryLevel -= this.batteryDrainRate * deltaTime
-            this.updateProgressBar()
+            this.syncUI()
             this.updateExpression()
             this.updateLightIntensity()
             if (this.batteryLevel <= 0) {
@@ -216,17 +147,6 @@ export default class TamagotchiControllerDebug {
 
         if (this.mixer) {
             this.mixer.update(deltaTime)
-        }
-    }
-
-    updateProgressBar() {
-        this.progressBar.style.width = `${this.batteryLevel}%`
-        if (this.batteryLevel > 50) {
-            this.progressBar.style.backgroundColor = '#61dafb'
-        } else if (this.batteryLevel > 20) {
-            this.progressBar.style.backgroundColor = '#ffff00'
-        } else {
-            this.progressBar.style.backgroundColor = '#ff0000'
         }
     }
 
@@ -254,13 +174,22 @@ export default class TamagotchiControllerDebug {
                 face.morphTargetInfluences[sadIndex] = sadness
             }
         }
+
+        if (this.batteryLevel <= 30 && this.isAlive && !this.lowPowerNotified) {
+            this.lowPowerNotified = true
+            this.ui?.setStatusMessage?.('Battery getting low – snack time?')
+        } else if (this.batteryLevel > 35 && this.lowPowerNotified) {
+            this.lowPowerNotified = false
+        }
     }
 
     die() {
         this.isAlive = false
+        this.lowPowerNotified = false
         console.log('The robot has died.')
         this.fadeToAction('Death', 0.5)
-        this.showResetButton()
+        this.ui?.setStatusMessage?.('Oh no! Your buddy powered down. Reset to revive')
+        this.ui?.enableReset?.(true)
     }
 
     reset() {
@@ -272,20 +201,27 @@ export default class TamagotchiControllerDebug {
         this.batteryLevel = 100;
         this.isAlive = true;
         this.currentMode = 'feed';
-        this.updateModeIndicator();
-        this.updateProgressBar();
+        this.lowPowerNotified = false;
         this.updateExpression();
         this.updateLightIntensity();
         this.fadeToAction('Walking', 0.5);
+        this.syncUI({ withMode: true });
 
-        if (this.resetButton) {
-            this.resetButton.style.display = 'none';
-        }
+        this.ui?.enableReset?.(false)
+        this.ui?.setStatusMessage?.('All better! Choose a mode to keep playing')
 
         // Restart waste creation with fresh interval
         this.startWasteCreation();
 
         console.log('[Reset] Tamagotchi fully reset.');
+    }
+
+    syncUI(options = {}) {
+        const { withMode = false } = options
+        this.ui?.updateBattery?.(this.batteryLevel)
+        if (withMode) {
+            this.ui?.onModeChange?.(this.currentMode)
+        }
     }
 
     // Waste management methods

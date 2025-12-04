@@ -6,10 +6,67 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link type="text/css" rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/themes/dark.css">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/shoelace.js"></script>
 </head>
 
 <body>
-    <canvas class="webgl"></canvas>
+    <canvas class="webgl" aria-label="Tamagotchi playground"></canvas>
+    <div class="scene-glow" aria-hidden="true"></div>
+
+    <div class="ui-shell" aria-live="polite">
+        <div class="ui-stack">
+            <div class="ui-pillbar">
+                <sl-badge pill class="pill" variant="neutral">Neo Pet Lab • 2025</sl-badge>
+                <sl-badge pill class="pill pill--status" variant="success">
+                    <span class="pill__dot" aria-hidden="true"></span>
+                    Link stable
+                </sl-badge>
+            </div>
+
+            <sl-card class="ui-card">
+                <div class="ui-row">
+                    <p class="ui-label">Mode</p>
+                    <span class="ui-mode" data-ui="modeLabel">Feed</span>
+                </div>
+
+                <div class="ui-battery">
+                    <div class="ui-battery__top">
+                        <span>Battery</span>
+                        <span class="ui-battery__value" data-ui="batteryValue">100%</span>
+                    </div>
+                    <div class="ui-battery__meter">
+                        <div class="ui-battery__fill" data-ui="batteryFill"></div>
+                    </div>
+                </div>
+
+                <p class="ui-status" data-ui="statusMessage">Tap deploy to wake your bot.</p>
+
+                <sl-button-group class="mode-buttons" label="Tamagotchi actions">
+                    <sl-button class="mode-button is-active" pill size="small" data-ui="modeButton" data-mode="feed">Feed</sl-button>
+                    <sl-button class="mode-button" pill size="small" data-ui="modeButton" data-mode="play">Play</sl-button>
+                    <sl-button class="mode-button" pill size="small" data-ui="modeButton" data-mode="clean">Clean</sl-button>
+                </sl-button-group>
+
+                <sl-button class="ui-primary" variant="primary" size="medium" pill data-ui="actionButton">Do action</sl-button>
+
+                <div class="ui-actions">
+                    <sl-button class="ui-secondary" size="small" pill data-ui="deployButton">Deploy egg</sl-button>
+                    <sl-button class="ui-secondary" size="small" pill data-ui="resetButton" disabled>Reset pet</sl-button>
+                </div>
+
+                <div class="ui-log">
+                    <p class="ui-label">Recent log</p>
+                    <ul class="log" data-ui="eventLog" aria-live="polite"></ul>
+                </div>
+            </sl-card>
+        </div>
+    </div>
+
+    <div class="toast" data-ui="hatchingMessage" hidden>
+        <span>Egg hatching… sit tight!</span>
+    </div>
+
     <script type="module" src="./script.js"></script>
 </body>
 

@@ -25,6 +25,8 @@ export default class Experience {
         this.sizes = new Sizes()
         this.time = new Time()
         this.scene = new THREE.Scene()
+        this.scene.background = new THREE.Color('#fdf6ef')
+        this.scene.fog = new THREE.FogExp2('#fdf6ef', 0.01)
         this.camera = new Camera(this)
         this.renderer = new Renderer(this)
         this.gui = new GUI()

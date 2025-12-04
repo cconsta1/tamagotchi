@@ -1,71 +1,338 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Press+Start+2P&display=swap');
+
+:root {
+    --bg-sunrise: #f7f1ec;
+    --bg-blossom: #f2edf8;
+    --ink: #1c1c24;
+    --muted: rgba(28, 28, 36, 0.68);
+    --card: rgba(255, 255, 255, 0.92);
+    --card-border: rgba(12, 12, 16, 0.08);
+    --accent-peach: #f9b4a5;
+    --accent-mint: #8cd3c4;
+    --accent-lilac: #c9b5ff;
+    --pill-bg: rgba(12, 12, 16, 0.06);
+    --pill-border: rgba(12, 12, 16, 0.15);
+    --sl-color-primary-600: #ef9a9a;
+    --sl-color-primary-500: #fbc0b8;
+    --sl-input-background-color: rgba(255, 255, 255, 0.6);
+}
+
+* {
+    box-sizing: border-box;
+    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+}
 
 body {
     margin: 0;
-    background-color: #282c34; /* Darker background */
-    color: #61dafb; /* Light blue text */
-    font-family: 'Press Start 2P', cursive; /* Custom font */
+    min-height: 100vh;
+    color: var(--ink);
+    background: radial-gradient(circle at 20% 20%, rgba(255, 188, 173, 0.5) 0%, transparent 45%),
+        radial-gradient(circle at 80% 0%, rgba(198, 190, 255, 0.45) 0%, transparent 55%),
+        linear-gradient(140deg, var(--bg-sunrise) 0%, var(--bg-blossom) 60%, #fefefe 100%);
+    overflow: hidden;
 }
 
-.progress-bar-container {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    width: 200px;
-    height: 20px;
-    border: 2px solid #61dafb; /* Light blue border */
-    background-color: #1a1a1a; /* Dark background */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: url('data:image/svg+xml,%3Csvg width="240" height="240" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240"%3E%3Cg fill="none" stroke="rgba(28,28,36,0.04)" stroke-width="1"%3E%3Cpath d="M0 120h240M120 0v240"/%3E%3C/g%3E%3C/svg%3E');
+    opacity: 0.8;
+    mix-blend-mode: multiply;
 }
 
-.progress-bar {
+.webgl {
+    position: fixed;
+    inset: 0;
+    width: 100%;
     height: 100%;
-    background-color: #61dafb; /* Light blue progress */
+    display: block;
+    outline: none;
+    background: transparent;
 }
 
-.lil-gui .button {
-    background-color: #61dafb; /* Light blue button */
-    color: #282c34; /* Dark text */
-    border: none;
-    padding: 10px;
-    cursor: pointer;
-    font-family: 'Press Start 2P', cursive; /* Custom font */
+.scene-glow {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(60% 70% at 55% 65%, rgba(255, 198, 170, 0.25), transparent 70%);
+    z-index: 1;
 }
 
-.lil-gui .button:hover {
-    background-color: #21a1f1; /* Darker blue on hover */
+.ui-shell {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    padding: clamp(1rem, 5vw, 5rem);
+    pointer-events: none;
+    z-index: 2;
 }
 
-.mode-indicator {
-    position: absolute;
-    top: 50px;
-    left: 10px;
-    color: #fff;
+.ui-stack {
+    width: min(420px, 95vw);
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    pointer-events: auto;
+}
+
+.ui-pillbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.65rem;
+}
+
+.pill::part(base) {
+    background: var(--pill-bg);
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
     font-family: 'Press Start 2P', cursive;
-    font-size: 20px;
 }
 
-.reset-button {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    padding: 10px;
-    background-color: #ff0000;
-    color: #fff;
+.pill--status::part(base) {
+    background: rgba(140, 211, 196, 0.35);
+    border-color: rgba(140, 211, 196, 0.6);
+    color: #0f4e40;
+}
+
+.pill__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3ba48d;
+    box-shadow: 0 0 8px #3ba48d;
+}
+
+.ui-card::part(base) {
+    background: var(--card);
+    border-radius: 36px;
+    border: 1px solid var(--card-border);
+    padding: 1.75rem;
+    box-shadow: 0 25px 60px rgba(30, 27, 24, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+}
+
+.ui-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.ui-label {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+}
+
+.ui-mode {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-peach);
+}
+
+.ui-battery {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ui-battery__top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+}
+
+.ui-battery__meter {
+    height: 14px;
+    border-radius: 999px;
+    background: rgba(12, 12, 16, 0.08);
+    overflow: hidden;
+}
+
+.ui-battery__fill {
+    height: 100%;
+    width: 100%;
+    transform-origin: left center;
+    transform: scaleX(1);
+    background: linear-gradient(90deg, var(--accent-mint), var(--accent-lilac));
+    transition: transform 0.35s ease;
+}
+
+.ui-status {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.55;
+    color: var(--ink);
+}
+
+.mode-buttons {
+    width: 100%;
+}
+
+.mode-buttons::part(base) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+    background: transparent;
+    padding: 0;
+}
+
+.mode-button {
+    width: 100%;
+}
+
+.mode-button::part(base) {
+    width: 100%;
+    border-radius: 32px;
+    border: 1px solid rgba(12, 12, 16, 0.12);
+    background: rgba(12, 12, 16, 0.04);
+    color: var(--ink);
+    letter-spacing: 0.12em;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.mode-button.is-active::part(base) {
+    border-color: var(--accent-peach);
+    background: rgba(249, 180, 165, 0.15);
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1px rgba(249, 180, 165, 0.3);
+}
+
+.ui-primary::part(base) {
+    width: 100%;
+    border-radius: 32px;
+    padding-inline: 1.4rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    background: linear-gradient(120deg, #ffe9d4, #ffd3d3);
+    color: var(--ink);
+    box-shadow: 0 12px 25px rgba(249, 180, 165, 0.35);
     border: none;
-    cursor: pointer;
-    display: none; /* Initially hidden */
 }
 
-.hatching-message {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 20px;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    font-size: 24px;
-    display: none; /* Initially hidden */
+.ui-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.ui-actions sl-button {
+    width: 100%;
+}
+
+.ui-secondary::part(base) {
+    width: 100%;
+    border-radius: 28px;
+    border: 1px solid rgba(12, 12, 16, 0.12);
+    background: rgba(12, 12, 16, 0.04);
+    color: var(--ink);
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+}
+
+.ui-secondary:not([disabled])::part(base):hover {
+    border-color: var(--accent-lilac);
+    background: rgba(201, 181, 255, 0.12);
+}
+
+.ui-secondary[disabled]::part(base) {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.ui-log {
+    background: rgba(12, 12, 16, 0.04);
+    border-radius: 28px;
+    border: 1px solid rgba(12, 12, 16, 0.08);
+    padding: 1.1rem;
+}
+
+.log {
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    max-height: 130px;
+    overflow: hidden;
+}
+
+.log li {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.toast {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(6px);
+    font-family: 'Press Start 2P', cursive;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--ink);
+    z-index: 3;
+}
+
+.toast[hidden] {
+    display: none;
+}
+
+button:focus-visible,
+.mode-button:focus-visible::part(base),
+.ui-primary:focus-visible::part(base),
+.ui-secondary:focus-visible::part(base) {
+    outline: 2px dashed var(--accent-lilac);
+    outline-offset: 3px;
+}
+
+.lil-gui {
+    display: none !important;
+}
+
+@media (max-width: 640px) {
+    body {
+        overflow-y: auto;
+    }
+
+    .ui-shell {
+        justify-content: center;
+    }
+
+    .ui-stack {
+        width: min(440px, 100%);
+    }
+
+    .ui-pillbar {
+        flex-direction: column;
+    }
 }
