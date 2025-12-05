@@ -1,17 +1,20 @@
-# CyberPet
+# Tamagotchi
 
-This project is a virtual pet game inspired by the classic Tamagotchi. The game is built using Three.js for rendering 3D graphics and provides an interactive experience for users to take care of their virtual pet.
+A 3D virtual pet game built with Three.js.
 
 ## Setup
-Download [Node.js](https://nodejs.org/en/download/).
-Run these commands:
+```bash
+npm install
+npm run dev
+```
 
-`npm install` - Install dependencies (only the first time)
-
-`npm run dev` - Run the local server at localhost:8080
-
-`npm run build` - Build for production in the dist/ directory
+## How to Play
+1. Click **Deploy Egg** to hatch your pet
+2. Choose a mode: **Feed**, **Play**, or **Clean**
+3. Click **Do Action** to interact
+4. Watch the battery level—keep it charged!
+5. Click **Reset Pet** if your pet powers down
 
 ## Credits
-- Model by [Tomás Laulhé](https://www.patreon.com/quaternius), modifications by [Don McCurdy](https://donmccurdy.com/). CC0.
-- Based on examples from [three.js](https://threejs.org).
+- Robot model by [Tomás Laulhé](https://www.patreon.com/quaternius), modified by [Don McCurdy](https://donmccurdy.com/). CC0.
+- Built with [three.js](https://threejs.org).

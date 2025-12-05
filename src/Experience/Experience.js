@@ -28,8 +28,8 @@ export default class Experience {
         this.sizes = new Sizes()
         this.time = new Time()
         this.scene = new THREE.Scene()
-        this.scene.background = new THREE.Color('#fff5ea')
-        this.scene.fog = new THREE.FogExp2('#fbeede', 0.013)
+        this.scene.background = new THREE.Color('#fdf1e2')
+        this.scene.fog = new THREE.FogExp2('#f8e7d4', 0.0125)
 
         this.gui = this.config.debug ? new GUI({ width: 320 }) : null
         this.camera = new Camera(this)

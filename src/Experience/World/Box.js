@@ -12,7 +12,7 @@ export default class Box extends EventEmitter {
         this.ui = window.tamagotchiUI
 
         this.loader = new GLTFLoader()
-        this.palette = ['#f9b4a5', '#ffcfd8', '#fbe4cf', '#8cd3c4', '#c9b5ff']
+        this.palette = ['#ffaec9', '#ffd3ba', '#baffd8', '#b4e7ff', '#dfc4ff']
         this.hatchDelay = 8000
         this.state = {
             isHatching: false,
@@ -199,15 +199,15 @@ export default class Box extends EventEmitter {
                 const cloned = material.clone()
                 const swatch = new THREE.Color(this.palette[index % this.palette.length])
                 if (cloned.color) {
-                    cloned.color.lerp(swatch, 0.85)
+                    cloned.color.lerp(swatch, 0.75)
                 } else {
                     cloned.color = swatch
                 }
-                cloned.metalness = Math.min(0.28, (cloned.metalness ?? 0.1) + 0.12)
-                const roughBase = cloned.roughness ?? 0.58
-                cloned.roughness = THREE.MathUtils.clamp(roughBase + 0.08, 0.4, 0.75)
-                cloned.emissive = swatch.clone().multiplyScalar(0.08)
-                cloned.emissiveIntensity = 0.2
+                cloned.metalness = Math.min(0.24, (cloned.metalness ?? 0.1) + 0.1)
+                const roughBase = cloned.roughness ?? 0.6
+                cloned.roughness = THREE.MathUtils.clamp(roughBase + 0.04, 0.42, 0.74)
+                cloned.emissive = swatch.clone().multiplyScalar(0.07)
+                cloned.emissiveIntensity = 0.18
                 cloned.flatShading = true
                 index += 1
                 return cloned

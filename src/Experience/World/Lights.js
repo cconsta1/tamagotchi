@@ -4,18 +4,18 @@ export default class Lights {
     constructor({ experience }) {
         this.experience = experience
         this.scene = experience.scene
-        this.backgroundWarm = new THREE.Color('#fff5ea')
-        this.backgroundDusk = new THREE.Color('#f7e6d4')
+        this.backgroundWarm = new THREE.Color('#fdf1e2')
+        this.backgroundDusk = new THREE.Color('#f6e0cc')
 
         this.createLights()
     }
 
     createLights() {
-        this.ambientLight = new THREE.HemisphereLight('#ffeedd', '#f2cfa8', 0.6)
+        this.ambientLight = new THREE.HemisphereLight('#ffe8d4', '#f1c4a8', 0.62)
         this.ambientLight.position.set(0, 25, 0)
         this.scene.add(this.ambientLight)
 
-        this.sunLight = new THREE.DirectionalLight('#ffd1a1', 1.8)
+        this.sunLight = new THREE.DirectionalLight('#f8c18c', 1.75)
         this.sunLight.position.set(-7, 10, 6)
         this.sunLight.castShadow = true
         this.sunLight.shadow.mapSize.set(2048, 2048)
@@ -29,16 +29,16 @@ export default class Lights {
         this.sunLight.shadow.normalBias = 0.03
         this.scene.add(this.sunLight)
 
-        this.fillLight = new THREE.DirectionalLight('#e6f0ff', 0.7)
+        this.fillLight = new THREE.DirectionalLight('#d7e4f6', 0.72)
         this.fillLight.position.set(6, 5, -2)
         this.fillLight.castShadow = false
         this.scene.add(this.fillLight)
 
-        this.rimLight = new THREE.PointLight('#ffd4d9', 1.1, 20, 1.4)
+        this.rimLight = new THREE.PointLight('#f3c7d6', 1.1, 20, 1.4)
         this.rimLight.position.set(2.5, 4.5, -6)
         this.scene.add(this.rimLight)
 
-        this.glowLight = new THREE.SpotLight('#ffe8d1', 0.5, 40, Math.PI / 5, 0.4)
+        this.glowLight = new THREE.SpotLight('#ffe5c6', 0.5, 40, Math.PI / 5, 0.4)
         this.glowLight.position.set(-4, 8, 2)
         this.glowLight.target.position.set(0, 1.5, 0)
         this.scene.add(this.glowLight)

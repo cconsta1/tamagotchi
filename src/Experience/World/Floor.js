@@ -15,10 +15,10 @@ export default class Floor {
         const base = new THREE.Mesh(
             new THREE.CircleGeometry(120, 48),
             new THREE.MeshStandardMaterial({
-                color: new THREE.Color('#fff4e6'),
+                color: new THREE.Color('#fbead8'),
                 map: texture,
-                metalness: 0.03,
-                roughness: 0.92,
+                metalness: 0.025,
+                roughness: 0.9,
                 flatShading: true,
                 transparent: true,
                 opacity: 0.98
@@ -31,9 +31,9 @@ export default class Floor {
         const stitching = new THREE.Mesh(
             new THREE.RingGeometry(18, 19, 36),
             new THREE.MeshBasicMaterial({
-                color: new THREE.Color('#f4d3b0'),
+                color: new THREE.Color('#e6c1ab'),
                 transparent: true,
-                opacity: 0.45
+                opacity: 0.42
             })
         )
         stitching.rotation.x = -Math.PI / 2
@@ -43,7 +43,7 @@ export default class Floor {
 
     setPlinth() {
         const plinthMaterial = new THREE.MeshStandardMaterial({
-            color: new THREE.Color('#ffeede'),
+            color: new THREE.Color('#f3d9c2'),
             roughness: 0.48,
             metalness: 0.02,
             flatShading: true
@@ -57,7 +57,7 @@ export default class Floor {
         const inset = new THREE.Mesh(
             new THREE.CylinderGeometry(8.1, 8.3, 0.12, 32),
             new THREE.MeshStandardMaterial({
-                color: new THREE.Color('#ffe0cf'),
+                color: new THREE.Color('#e9c6b6'),
                 roughness: 0.42,
                 metalness: 0.06,
                 flatShading: true
@@ -70,9 +70,9 @@ export default class Floor {
         const accentRing = new THREE.Mesh(
             new THREE.RingGeometry(8.6, 9.2, 40),
             new THREE.MeshBasicMaterial({
-                color: new THREE.Color('#ffb8a7'),
+                color: new THREE.Color('#d29cb5'),
                 transparent: true,
-                opacity: 0.35
+                opacity: 0.32
             })
         )
         accentRing.rotation.x = -Math.PI / 2
@@ -86,10 +86,10 @@ export default class Floor {
         canvas.width = canvas.height = size
         const ctx = canvas.getContext('2d')
 
-        ctx.fillStyle = '#fff8f0'
+        ctx.fillStyle = '#fff3e8'
         ctx.fillRect(0, 0, size, size)
 
-        ctx.strokeStyle = 'rgba(212, 178, 143, 0.14)'
+        ctx.strokeStyle = 'rgba(204, 165, 131, 0.12)'
         ctx.lineWidth = 10
         for (let i = 0; i <= size; i += size / 8) {
             ctx.beginPath()
@@ -98,7 +98,7 @@ export default class Floor {
             ctx.stroke()
         }
 
-        ctx.fillStyle = 'rgba(236, 203, 164, 0.1)'
+        ctx.fillStyle = 'rgba(228, 192, 157, 0.1)'
         const cell = size / 16
         for (let x = 0; x < size; x += cell) {
             for (let y = 0; y < size; y += cell) {

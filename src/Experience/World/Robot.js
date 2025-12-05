@@ -10,7 +10,7 @@ export default class Robot {
         this.loader = new GLTFLoader()
 
         this.tamagotchiController = null
-        this.palette = ['#dfe2e8', '#7fc7c2', '#ff9a88', '#ffe7ac', '#b0c5dd', '#f4f1eb']
+        this.palette = ['#ffb3ba', '#bae1ff', '#ffffba', '#baffc9', '#ffd9ba', '#e0bbff']
         this.loading = false
     }
 
@@ -69,13 +69,13 @@ export default class Robot {
                 const cloned = material.clone()
                 const swatch = new THREE.Color(this.palette[index % this.palette.length])
                 if (cloned.color) {
-                    cloned.color.lerp(swatch, 0.7)
+                    cloned.color.lerp(swatch, 0.75)
                 } else {
                     cloned.color = swatch
                 }
-                cloned.metalness = Math.min(0.32, (cloned.metalness ?? 0.08) + 0.12)
-                const roughBase = cloned.roughness ?? 0.58
-                cloned.roughness = THREE.MathUtils.clamp(roughBase, 0.45, 0.68)
+                cloned.metalness = Math.min(0.25, (cloned.metalness ?? 0.08) + 0.08)
+                const roughBase = cloned.roughness ?? 0.62
+                cloned.roughness = THREE.MathUtils.clamp(roughBase, 0.5, 0.72)
                 cloned.emissive = swatch.clone().multiplyScalar(0.1)
                 cloned.emissiveIntensity = 0.2
                 cloned.flatShading = true
