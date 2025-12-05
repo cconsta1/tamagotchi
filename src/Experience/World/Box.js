@@ -1,97 +1,192 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import Experience from '../Experience.js'
 import EventEmitter from '../Utils/EventEmitter.js'
 
 export default class Box extends EventEmitter {
-    constructor() {
+    constructor({ world }) {
         super()
-        this.experience = new Experience()
+
+        this.world = world
+        this.experience = world.experience
         this.scene = this.experience.scene
         this.ui = window.tamagotchiUI
-        this.palette = ['#ffb3b3', '#ffd6a5', '#caffbf', '#9bf6ff', '#bdb2ff']
 
-        // Load the model
+        this.loader = new GLTFLoader()
+        this.palette = ['#f9b4a5', '#ffcfd8', '#fbe4cf', '#8cd3c4', '#c9b5ff']
+        this.hatchDelay = 8000
+        this.state = {
+            isHatching: false,
+            hasHatched: false
+        }
+
+        this.handleAnimationFinished = this.onAnimationFinished.bind(this)
+
         this.loadModel()
-    }
-
-    loadModel() {
-        const loader = new GLTFLoader()
-        loader.load('models/GiftBox/gift_loot_box_thing_wip.glb', (gltf) => {
-            this.model = gltf.scene
-            this.model.scale.set(0.5, 0.5, 0.5)
-            this.applyModernPalette(this.model)
-            this.scene.add(this.model)
-
-            // Rename the animation
-            gltf.animations.forEach((clip) => {
-                if (clip.name === 'Take 001') {
-                    clip.name = 'Hatch'
-                }
-            })
-
-            // Log available animations
-            console.log('Available animations for Box:', gltf.animations.map(anim => anim.name))
-
-            // Store animations
-            this.animations = gltf.animations 
-            this.mixer = new THREE.AnimationMixer(this.model)
-
-            // Add a button to trigger the animation after 10 seconds
-            this.hatchButton = this.experience.gui.add({ triggerAnimation: () => this.triggerAnimation() }, 'triggerAnimation').name('Hatch')
-        }, undefined, (e) => {
-            console.error(e)
-        })
-
-        // Load the hatch sound
         this.hatchSound = new Audio('sounds/pop.wav')
     }
 
-    playHatchSound() {
-        if (this.hatchSound) {
-            this.hatchSound.play()
+    loadModel() {
+        this.loader.load(
+            'models/GiftBox/gift_loot_box_thing_wip.glb',
+            (gltf) => {
+                this.model = gltf.scene
+                this.model.scale.set(0.52, 0.52, 0.52)
+                this.model.position.set(0, 0, 0)
+                this.applyModernPalette(this.model)
+                this.model.traverse((child) => {
+                    if (!child.isMesh) return
+                    child.castShadow = true
+                    child.receiveShadow = true
+                })
+                this.scene.add(this.model)
+
+                gltf.animations.forEach((clip) => {
+                    if (clip.name === 'Take 001') {
+                        clip.name = 'Hatch'
+                    }
+                })
+
+                this.animations = gltf.animations
+                this.mixer = new THREE.AnimationMixer(this.model)
+
+                if (this.experience.gui) {
+                    this.debugFolder = this.experience.gui.addFolder('Gift Box')
+                    this.hatchButton = this.debugFolder
+                        .add({ hatch: () => this.triggerAnimation() }, 'hatch')
+                        .name('Hatch')
+                }
+            },
+            undefined,
+            (error) => {
+                console.error('Failed to load gift box model', error)
+            }
+        )
+    }
+
+    canTrigger() {
+        return Boolean(this.model && this.animations && this.mixer) && !this.state.isHatching && !this.state.hasHatched
+    }
+
+    triggerAnimation() {
+        if (!this.canTrigger()) {
+            return false
         }
+
+        this.state.isHatching = true
+        this.ui?.showHatchingOverlay?.(true)
+        this.ui?.setStatusMessage?.('Egg wobbling… almost ready!')
+        this.ui?.logEvent?.('Incubation sequence started')
+        this.trigger('boxHatching')
+
+        if (this.hatchButton && this.hatchButton.disable) {
+            this.hatchButton.disable()
+        }
+
+        if (this.hatchTimer) {
+            clearTimeout(this.hatchTimer)
+        }
+
+        this.hatchTimer = window.setTimeout(() => {
+            const started = this.playAnimation('Hatch')
+            if (!started) {
+                this.state.isHatching = false
+                this.ui?.showHatchingOverlay?.(false)
+            }
+        }, this.hatchDelay)
+
+        return true
+    }
+
+    playAnimation(name) {
+        if (!this.animations || !this.mixer) {
+            return false
+        }
+
+        const clip = THREE.AnimationClip.findByName(this.animations, name)
+        if (!clip) {
+            console.warn(`Animation ${name} not found`)
+            return false
+        }
+
+        this.mixer.stopAllAction()
+        const action = this.mixer.clipAction(clip)
+        action.reset()
+        action.loop = THREE.LoopOnce
+        action.clampWhenFinished = true
+        action.play()
+
+        if (this.hatchSoundTimer) {
+            clearTimeout(this.hatchSoundTimer)
+        }
+        this.hatchSoundTimer = window.setTimeout(() => {
+            this.playHatchSound()
+        }, 420)
+
+        this.mixer.removeEventListener('finished', this.handleAnimationFinished)
+        this.mixer.addEventListener('finished', this.handleAnimationFinished)
+        return true
+    }
+
+    playHatchSound() {
+        if (!this.hatchSound) return
+        this.hatchSound.currentTime = 0
+        this.hatchSound.play().catch(() => {})
     }
 
     onAnimationFinished() {
-        // Remove the box from the scene
-        if (this.model) {
-            this.scene.remove(this.model)
-            this.model.traverse((child) => {
-                if (child.geometry) child.geometry.dispose()
-                if (child.material) {
-                    if (Array.isArray(child.material)) {
-                        child.material.forEach((material) => material.dispose())
-                    } else {
-                        child.material.dispose()
-                    }
-                }
-            })
-            this.model = null
+        this.mixer.removeEventListener('finished', this.handleAnimationFinished)
+        this.state.isHatching = false
+        this.state.hasHatched = true
+
+        if (this.hatchTimer) {
+            clearTimeout(this.hatchTimer)
+            this.hatchTimer = null
         }
 
-        // Remove the hatch button from the GUI
-        if (this.hatchButton) {
+        if (this.hatchSoundTimer) {
+            clearTimeout(this.hatchSoundTimer)
+            this.hatchSoundTimer = null
+        }
+
+        this.disposeModel()
+
+        if (this.hatchButton && typeof this.hatchButton.destroy === 'function') {
             this.hatchButton.destroy()
             this.hatchButton = null
+        }
+
+        if (this.debugFolder && typeof this.debugFolder.destroy === 'function') {
+            this.debugFolder.destroy()
+            this.debugFolder = null
         }
 
         this.ui?.showHatchingOverlay?.(false)
         this.ui?.setStatusMessage?.('Your buddy just hatched! Give them something to do')
 
-        // Emit an event to notify that the box animation is finished
         this.trigger('boxHatched')
     }
 
-    triggerAnimation() {
-        if (this.hatchButton) {
-            this.hatchButton.disable() // Disable the button to prevent multiple triggers
-        }
-        this.ui?.showHatchingOverlay?.(true)
-        this.ui?.setStatusMessage?.('Egg wobbling… almost ready!')
-        setTimeout(() => {
-            this.playAnimation('Hatch')
-        }, 10000) // Hatch after 10 seconds
+    disposeModel() {
+        if (!this.model) return
+        this.scene.remove(this.model)
+        this.model.traverse((child) => {
+            if (!child.isMesh) return
+            if (child.geometry && typeof child.geometry.dispose === 'function') {
+                child.geometry.dispose()
+            }
+            if (Array.isArray(child.material)) {
+                child.material.forEach((material) => {
+                    if (material && typeof material.dispose === 'function') {
+                        material.dispose()
+                    }
+                })
+            } else {
+                if (child.material && typeof child.material.dispose === 'function') {
+                    child.material.dispose()
+                }
+            }
+        })
+        this.model = null
     }
 
     applyModernPalette(object3d) {
@@ -104,15 +199,16 @@ export default class Box extends EventEmitter {
                 const cloned = material.clone()
                 const swatch = new THREE.Color(this.palette[index % this.palette.length])
                 if (cloned.color) {
-                    cloned.color.lerp(swatch, 0.8)
+                    cloned.color.lerp(swatch, 0.85)
                 } else {
                     cloned.color = swatch
                 }
-                cloned.metalness = Math.min(0.3, (cloned.metalness ?? 0.1) + 0.15)
-                const roughBase = cloned.roughness ?? 0.55
-                cloned.roughness = THREE.MathUtils.clamp(roughBase, 0.35, 0.7)
-                cloned.emissive = swatch.clone().multiplyScalar(0.12)
-                cloned.emissiveIntensity = 0.22
+                cloned.metalness = Math.min(0.28, (cloned.metalness ?? 0.1) + 0.12)
+                const roughBase = cloned.roughness ?? 0.58
+                cloned.roughness = THREE.MathUtils.clamp(roughBase + 0.08, 0.4, 0.75)
+                cloned.emissive = swatch.clone().multiplyScalar(0.08)
+                cloned.emissiveIntensity = 0.2
+                cloned.flatShading = true
                 index += 1
                 return cloned
             }
@@ -123,28 +219,6 @@ export default class Box extends EventEmitter {
                 child.material = tintMaterial(child.material)
             }
         })
-    }
-
-    playAnimation(name) {
-        const clip = THREE.AnimationClip.findByName(this.animations, name)
-        if (clip) {
-            const action = this.mixer.clipAction(clip)
-            action.reset().play()
-            action.clampWhenFinished = true
-            action.loop = THREE.LoopOnce
-
-            // Play the hatch sound a bit earlier to synchronize with the animation
-            setTimeout(() => {
-                this.playHatchSound()
-            }, 500) // Adjust the timing as needed
-
-            // Listen for the finished event
-            this.mixer.addEventListener('finished', () => {
-                this.onAnimationFinished()
-            })
-        } else {
-            console.warn(`Animation ${name} not found`)
-        }
     }
 
     update(deltaTime) {

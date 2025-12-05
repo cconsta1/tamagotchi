@@ -81,6 +81,7 @@ window.tamagotchiUI = {
 
 const experience = new Experience(canvas)
 const ensureController = () => experience.world.robot?.tamagotchiController
+const box = experience.world?.box
 
 ui.modeButtons.forEach((button) => {
     button.addEventListener('click', () => {
@@ -96,14 +97,25 @@ ui.actionButton?.addEventListener('click', () => {
 })
 
 ui.deployButton?.addEventListener('click', () => {
-    experience.world.box?.triggerAnimation()
-    setStatusMessage('Egg warming up… stay close!')
+    const triggered = experience.world.box?.triggerAnimation()
+    if (triggered && ui.deployButton) {
+        ui.deployButton.disabled = true
+    }
 })
 
 ui.resetButton?.addEventListener('click', () => {
     ensureController()?.reset()
     setStatusMessage('Quick reboot complete. Keep caring!')
 })
+
+if (box) {
+    box.on('boxHatching', () => {
+        if (ui.deployButton) ui.deployButton.disabled = true
+    })
+    box.on('boxHatched', () => {
+        if (ui.deployButton) ui.deployButton.disabled = true
+    })
+}
 
 setActiveModeButton('feed')
 updateBattery(100)

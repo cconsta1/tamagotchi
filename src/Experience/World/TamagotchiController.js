@@ -1,14 +1,13 @@
 import * as THREE from 'three'
-import Experience from '../Experience.js'
 
 export default class TamagotchiController {
-    constructor(robot) {
-        this.experience = new Experience()
-        this.scene = this.experience.scene
+    constructor({ robot, experience }) {
         this.robot = robot
+        this.experience = experience ?? robot.experience
+        this.scene = this.experience.scene
 
         this.batteryLevel = 100
-        this.batteryDrainRate = 100 / 300 // Drains in 5 minutes
+        this.batteryDrainRate = 100 / 300 // Drains in ~5 minutes
         this.isAlive = true
         this.currentMode = 'feed'
         this.wasteObjects = []
@@ -19,6 +18,14 @@ export default class TamagotchiController {
         this.actions = {}
         this.activeAction = null
         this.previousAction = null
+
+        this.wasteGeometry = new THREE.IcosahedronGeometry(0.35, 0)
+        this.wasteMaterial = new THREE.MeshStandardMaterial({
+            color: new THREE.Color('#b89682'),
+            roughness: 0.68,
+            metalness: 0.08,
+            flatShading: true
+        })
 
         this.initAnimations()
         this.logMorphTargets()
@@ -40,7 +47,7 @@ export default class TamagotchiController {
             }
         }
 
-        this.fadeToAction('Walking', 0.5)
+        this.fadeToAction('Walking', 0.4)
     }
 
     fadeToAction(clipName, duration) {
@@ -129,7 +136,7 @@ export default class TamagotchiController {
 
     restoreWalking() {
         if (this.isAlive) {
-            this.fadeToAction('Walking', 0.5)
+            this.fadeToAction('Walking', 0.4)
         }
     }
 
@@ -152,7 +159,7 @@ export default class TamagotchiController {
 
     updateLightIntensity() {
         const intensity = this.batteryLevel / 100
-        this.experience.world.lights.updateLightIntensity(intensity)
+        this.experience.world?.lights?.updateLightIntensity(intensity)
     }
 
     logMorphTargets() {
@@ -186,34 +193,28 @@ export default class TamagotchiController {
     die() {
         this.isAlive = false
         this.lowPowerNotified = false
-        console.log('The robot has died.')
         this.fadeToAction('Death', 0.5)
         this.ui?.setStatusMessage?.('Oh no! Your buddy powered down. Reset to revive')
         this.ui?.enableReset?.(true)
     }
 
     reset() {
-        console.log('[Reset] Resetting the Tamagotchi...');
+        this.clearWasteCreation()
+        this.clearWasteObjects()
 
-        this.clearWasteCreation();      // Stop waste generation during reset
-        this.clearWasteObjects();       // Clean all waste objects safely
-
-        this.batteryLevel = 100;
-        this.isAlive = true;
-        this.currentMode = 'feed';
-        this.lowPowerNotified = false;
-        this.updateExpression();
-        this.updateLightIntensity();
-        this.fadeToAction('Walking', 0.5);
-        this.syncUI({ withMode: true });
+        this.batteryLevel = 100
+        this.isAlive = true
+        this.currentMode = 'feed'
+        this.lowPowerNotified = false
+        this.updateExpression()
+        this.updateLightIntensity()
+        this.fadeToAction('Walking', 0.4)
+        this.syncUI({ withMode: true })
 
         this.ui?.enableReset?.(false)
         this.ui?.setStatusMessage?.('All better! Choose a mode to keep playing')
 
-        // Restart waste creation with fresh interval
-        this.startWasteCreation();
-
-        console.log('[Reset] Tamagotchi fully reset.');
+        this.startWasteCreation()
     }
 
     syncUI(options = {}) {
@@ -229,88 +230,97 @@ export default class TamagotchiController {
     //  Clears any running waste creation interval safely
     clearWasteCreation() {
         if (this.wasteCreationInterval) {
-            console.log('[Waste] Clearing existing waste creation interval.');
-            clearInterval(this.wasteCreationInterval);
-            this.wasteCreationInterval = null;
+            clearInterval(this.wasteCreationInterval)
+            this.wasteCreationInterval = null
         }
     }
 
     //  Starts the waste creation process with clear debug logs
     startWasteCreation() {
-        this.clearWasteCreation(); // Prevent duplicate intervals
-
-        console.log('[Waste] Starting waste creation process.');
+        this.clearWasteCreation()
         this.wasteCreationInterval = setInterval(() => {
             if (this.isAlive) {
-                console.log('[Waste] Attempting to create waste...');
                 this.createWaste();
             }
-        }, 15000); // Create waste every 15 seconds
+        }, 15000)
     }
 
     // Creates a waste object with checks for overlaps and duplicates
     createWaste() {
-        const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-        const material = new THREE.MeshStandardMaterial({ color: 0x654321 });
-        const waste = new THREE.Mesh(geometry, material);
+        if (!this.robot.model) {
+            return
+        }
 
-        const robotPosition = this.robot.model.position;
-        const robotDirection = new THREE.Vector3();
-        this.robot.model.getWorldDirection(robotDirection);
+        const wasteMaterial = this.wasteMaterial.clone()
+        const baseHSL = { h: 0, s: 0, l: 0 }
+        wasteMaterial.color.getHSL(baseHSL)
+        const hOffset = (Math.random() - 0.5) * 0.06
+        const sOffset = (Math.random() - 0.5) * 0.1
+        const lOffset = (Math.random() - 0.5) * 0.08
+        wasteMaterial.color.setHSL(
+            THREE.MathUtils.clamp(baseHSL.h + hOffset, 0, 1),
+            THREE.MathUtils.clamp(baseHSL.s + sOffset, 0, 1),
+            THREE.MathUtils.clamp(baseHSL.l + lOffset, 0, 1)
+        )
+        const waste = new THREE.Mesh(this.wasteGeometry, wasteMaterial)
+        waste.castShadow = true
+        waste.receiveShadow = true
 
-        let position, overlap;
-        let attemptCount = 0;
+        const robotPosition = this.robot.model.position
+        const robotDirection = new THREE.Vector3()
+        this.robot.model.getWorldDirection(robotDirection)
+
+        let position
+        let overlap
+        let attemptCount = 0
 
         do {
-            attemptCount++;
-            const offsetX = (Math.random() - 0.5) * 2;
-            const offsetZ = (Math.random() - 0.5) * 2;
+            attemptCount += 1
+            const offsetX = (Math.random() - 0.5) * 2
+            const offsetZ = (Math.random() - 0.5) * 2
 
             position = new THREE.Vector3(
                 robotPosition.x - robotDirection.x * 2 + offsetX,
                 0.25,
                 robotPosition.z - robotDirection.z * 2 + offsetZ
-            );
+            )
 
-            overlap = this.wasteObjects.some(wasteObj => wasteObj.position.distanceTo(position) < 1);
-        } while (overlap && attemptCount < 10); // Limit attempts to prevent infinite loops
+            overlap = this.wasteObjects.some((wasteObj) => wasteObj.position.distanceTo(position) < 0.8)
+        } while (overlap && attemptCount < 8)
 
         if (overlap) {
-            console.warn('[Waste] Failed to place waste: too many overlaps.');
-            return;
+            return
         }
 
-        waste.position.copy(position);
-        this.scene.add(waste);
-        this.wasteObjects.push(waste);
-
-        console.log(`[Waste] Created at (${position.x.toFixed(2)}, ${position.y.toFixed(2)}, ${position.z.toFixed(2)}). Total waste: ${this.wasteObjects.length}`);
+        waste.position.copy(position)
+        waste.rotation.y = Math.random() * Math.PI * 2
+        this.scene.add(waste)
+        this.wasteObjects.push(waste)
     }
 
     // Clears all waste objects from the scene with logging
     clearWasteObjects() {
         if (this.wasteObjects.length > 0) {
-            console.log(`[Waste] Removing ${this.wasteObjects.length} waste objects.`);
-            this.wasteObjects.forEach(waste => {
-                this.scene.remove(waste);
-            });
-            this.wasteObjects = [];
-        } else {
-            console.log('[Waste] No waste objects to remove.');
+            this.wasteObjects.forEach((waste) => {
+                this.scene.remove(waste)
+                if (waste.material && typeof waste.material.dispose === 'function') {
+                    waste.material.dispose()
+                }
+            })
+            this.wasteObjects = []
         }
     }
 
     // Cleans all waste from the scene with logs
     cleanWaste() {
         if (this.wasteObjects.length > 0) {
-            console.log(`[Waste] Cleaning up ${this.wasteObjects.length} waste objects...`);
-            this.wasteObjects.forEach(waste => {
-                this.scene.remove(waste);
-            });
-            this.wasteObjects = [];
-            console.log('[Waste] All waste objects removed.');
-        } else {
-            console.log('[Waste] No waste to clean.');
+            this.wasteObjects.forEach((waste) => {
+                this.scene.remove(waste)
+                if (waste.material && typeof waste.material.dispose === 'function') {
+                    waste.material.dispose()
+                }
+            })
+            this.wasteObjects = []
         }
     }
 }

@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import Stats from 'three/examples/jsm/libs/stats.module.js'
 import { GUI } from 'lil-gui'
 
 import Sizes from './Utils/Sizes.js'
@@ -21,16 +20,21 @@ export default class Experience {
         // Global access
         this.canvas = _canvas
 
+        this.config = {
+            debug: window.location.hash.includes('debug')
+        }
+
         // Setup
         this.sizes = new Sizes()
         this.time = new Time()
         this.scene = new THREE.Scene()
-        this.scene.background = new THREE.Color('#fdf6ef')
-        this.scene.fog = new THREE.FogExp2('#fdf6ef', 0.01)
+        this.scene.background = new THREE.Color('#fff5ea')
+        this.scene.fog = new THREE.FogExp2('#fbeede', 0.013)
+
+        this.gui = this.config.debug ? new GUI({ width: 320 }) : null
         this.camera = new Camera(this)
         this.renderer = new Renderer(this)
-        this.gui = new GUI()
-        this.world = new World(this)
+        this.world = new World({ experience: this })
 
         // Events
         this.sizes.on('resize', () => {
@@ -41,9 +45,6 @@ export default class Experience {
             this.update()
         })
 
-        // Stats
-        // this.stats = new Stats()
-        // document.body.appendChild(this.stats.dom)
     }
 
     resize() {
@@ -56,9 +57,7 @@ export default class Experience {
 
         this.world.update(deltaTime)
 
-        this.camera.update()
-       
-        // this.stats.update()
+        this.camera.update(deltaTime)
 
         this.renderer.update()
     }

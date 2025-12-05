@@ -1,32 +1,38 @@
-import Experience from '../Experience.js'
 import Lights from './Lights.js'
 import Floor from './Floor.js'
 import Box from './Box.js'
 import Robot from './Robot.js'
 
 export default class World {
-    constructor() {
-        this.experience = new Experience()
-        this.scene = this.experience.scene
+    constructor({ experience }) {
+        this.experience = experience
+        this.scene = experience.scene
+        this.ui = window.tamagotchiUI
 
-        // Setup
-        this.lights = new Lights()
-        this.floor = new Floor()
-        this.box = new Box()
-        this.robot = new Robot()
+        // Allow experience consumers to grab the world reference later on
+        this.experience.world = this
+
+        this.setup()
+        this.registerEvents()
+    }
+
+    setup() {
+        this.lights = new Lights({ experience: this.experience })
+        this.floor = new Floor({ experience: this.experience })
+        this.box = new Box({ world: this })
+        this.robot = new Robot({ world: this })
+    }
+
+    registerEvents() {
+        if (!this.box) return
 
         this.box.on('boxHatched', () => {
-            console.log("Box hatched, loading robot...")
             this.robot.loadModel()
         })
     }
 
     update(deltaTime) {
-        if (this.box) {
-            this.box.update(deltaTime)
-        }
-        if (this.robot) {
-            this.robot.update(deltaTime)
-        }
+        this.box?.update(deltaTime)
+        this.robot?.update(deltaTime)
     }
 }

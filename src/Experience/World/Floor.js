@@ -1,10 +1,9 @@
 import * as THREE from 'three'
-import Experience from '../Experience.js'
 
 export default class Floor {
-    constructor() {
-        this.experience = new Experience()
-        this.scene = this.experience.scene
+    constructor({ experience }) {
+        this.experience = experience
+        this.scene = experience.scene
 
         this.setGround()
         this.setPlinth()
@@ -14,12 +13,13 @@ export default class Floor {
         const texture = this.createTatamiTexture()
 
         const base = new THREE.Mesh(
-            new THREE.CircleGeometry(120, 96),
+            new THREE.CircleGeometry(120, 48),
             new THREE.MeshStandardMaterial({
-                color: new THREE.Color('#f7eee4'),
+                color: new THREE.Color('#fff4e6'),
                 map: texture,
-                metalness: 0.05,
-                roughness: 0.9,
+                metalness: 0.03,
+                roughness: 0.92,
+                flatShading: true,
                 transparent: true,
                 opacity: 0.98
             })
@@ -29,11 +29,11 @@ export default class Floor {
         this.scene.add(base)
 
         const stitching = new THREE.Mesh(
-            new THREE.RingGeometry(18, 19, 96),
+            new THREE.RingGeometry(18, 19, 36),
             new THREE.MeshBasicMaterial({
-                color: new THREE.Color('#f4d5bf'),
+                color: new THREE.Color('#f4d3b0'),
                 transparent: true,
-                opacity: 0.6
+                opacity: 0.45
             })
         )
         stitching.rotation.x = -Math.PI / 2
@@ -43,38 +43,40 @@ export default class Floor {
 
     setPlinth() {
         const plinthMaterial = new THREE.MeshStandardMaterial({
-            color: new THREE.Color('#fff2e2'),
-            roughness: 0.45,
-            metalness: 0.02
+            color: new THREE.Color('#ffeede'),
+            roughness: 0.48,
+            metalness: 0.02,
+            flatShading: true
         })
 
-        const plinth = new THREE.Mesh(new THREE.CylinderGeometry(10, 10.8, 0.3, 80), plinthMaterial)
-        plinth.position.y = -0.15
+        const plinth = new THREE.Mesh(new THREE.CylinderGeometry(9.6, 11, 0.4, 36), plinthMaterial)
+        plinth.position.y = -0.18
         plinth.receiveShadow = true
-        plinth.castShadow = false
         this.scene.add(plinth)
 
         const inset = new THREE.Mesh(
-            new THREE.CylinderGeometry(8.5, 8.5, 0.08, 80),
+            new THREE.CylinderGeometry(8.1, 8.3, 0.12, 32),
             new THREE.MeshStandardMaterial({
-                color: new THREE.Color('#ffd9c8'),
-                roughness: 0.4,
-                metalness: 0.05
+                color: new THREE.Color('#ffe0cf'),
+                roughness: 0.42,
+                metalness: 0.06,
+                flatShading: true
             })
         )
-        inset.position.y = -0.02
+        inset.position.y = -0.05
+        inset.receiveShadow = true
         this.scene.add(inset)
 
         const accentRing = new THREE.Mesh(
-            new THREE.RingGeometry(8.7, 9.5, 80),
+            new THREE.RingGeometry(8.6, 9.2, 40),
             new THREE.MeshBasicMaterial({
-                color: new THREE.Color('#ffa7b6'),
+                color: new THREE.Color('#ffb8a7'),
                 transparent: true,
                 opacity: 0.35
             })
         )
         accentRing.rotation.x = -Math.PI / 2
-        accentRing.position.y = 0.001
+        accentRing.position.y = 0.002
         this.scene.add(accentRing)
     }
 
@@ -84,11 +86,11 @@ export default class Floor {
         canvas.width = canvas.height = size
         const ctx = canvas.getContext('2d')
 
-        ctx.fillStyle = '#fff9f2'
+        ctx.fillStyle = '#fff8f0'
         ctx.fillRect(0, 0, size, size)
 
-        ctx.strokeStyle = 'rgba(188, 164, 132, 0.15)'
-        ctx.lineWidth = 12
+        ctx.strokeStyle = 'rgba(212, 178, 143, 0.14)'
+        ctx.lineWidth = 10
         for (let i = 0; i <= size; i += size / 8) {
             ctx.beginPath()
             ctx.moveTo(0, i)
@@ -96,7 +98,7 @@ export default class Floor {
             ctx.stroke()
         }
 
-        ctx.fillStyle = 'rgba(231, 205, 174, 0.12)'
+        ctx.fillStyle = 'rgba(236, 203, 164, 0.1)'
         const cell = size / 16
         for (let x = 0; x < size; x += cell) {
             for (let y = 0; y < size; y += cell) {
@@ -109,6 +111,10 @@ export default class Floor {
         const texture = new THREE.CanvasTexture(canvas)
         texture.wrapS = THREE.ClampToEdgeWrapping
         texture.wrapT = THREE.ClampToEdgeWrapping
+        texture.anisotropy = 4
+        if ('colorSpace' in texture) {
+            texture.colorSpace = THREE.SRGBColorSpace
+        }
         texture.needsUpdate = true
         return texture
     }

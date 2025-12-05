@@ -1,13 +1,12 @@
 import * as THREE from 'three'
-import Experience from './Experience.js'
 
 export default class Renderer {
     constructor(experience) {
-        this.experience = new Experience()
-        this.canvas = this.experience.canvas
-        this.sizes = this.experience.sizes
-        this.scene = this.experience.scene
-        this.camera = this.experience.camera
+        this.experience = experience
+        this.canvas = experience.canvas
+        this.sizes = experience.sizes
+        this.scene = experience.scene
+        this.camera = experience.camera
 
         this.setInstance()
     }
@@ -15,20 +14,30 @@ export default class Renderer {
     setInstance() {
         this.instance = new THREE.WebGLRenderer({
             canvas: this.canvas,
-            antialias: true
+            antialias: true,
+            alpha: true
         })
+        if ('outputColorSpace' in this.instance) {
+            this.instance.outputColorSpace = THREE.SRGBColorSpace
+        }
         this.instance.toneMapping = THREE.ACESFilmicToneMapping
-        this.instance.toneMappingExposure = 1.3
+        this.instance.toneMappingExposure = 1.15
         this.instance.shadowMap.enabled = true
+        this.instance.shadowMap.autoUpdate = true
         this.instance.shadowMap.type = THREE.PCFSoftShadowMap
-        this.instance.setClearColor('#fdf6ef')
+        if ('useLegacyLights' in this.instance) {
+            this.instance.useLegacyLights = false
+        } else if ('physicallyCorrectLights' in this.instance) {
+            this.instance.physicallyCorrectLights = true
+        }
+        this.instance.setClearColor('#f6ede1', 1)
         this.instance.setSize(this.sizes.width, this.sizes.height)
-        this.instance.setPixelRatio(this.sizes.pixelRatio)
+        this.instance.setPixelRatio(Math.min(this.sizes.pixelRatio, 1.8))
     }
 
     resize() {
         this.instance.setSize(this.sizes.width, this.sizes.height)
-        this.instance.setPixelRatio(this.sizes.pixelRatio)
+        this.instance.setPixelRatio(Math.min(this.sizes.pixelRatio, 1.8))
     }
 
     update() {
